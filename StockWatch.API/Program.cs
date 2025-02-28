@@ -1,6 +1,7 @@
-using Microsoft.EntityFrameworkCore;         
-using StockWatch.Infrastructure;             
-using Microsoft.OpenApi.Models;            
+using Microsoft.EntityFrameworkCore;
+using StockWatch.Infrastructure;
+using StockWatch.Application.Services;  // ProductService'i ekliyoruz
+using Microsoft.OpenApi.Models;
 using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 // PostgreSQL bağlantısını ekleme
 builder.Services.AddDbContext<StockWatchDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ProductService'i DI container'a ekleyelim
+builder.Services.AddScoped<ProductService>();  // ProductService'in DI container'a eklenmesi
 
 // OpenAPI ve Swagger yapılandırması ekleme
 builder.Services.AddEndpointsApiExplorer();
@@ -18,7 +22,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Geliştirme ortamında Swagger'ı etkinleştir
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -27,7 +31,6 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "StockWatch API v1");
     });
 
-    // Swagger UI'yi tarayıcıda otomatik olarak açmak
     try
     {
         Process.Start(new ProcessStartInfo
@@ -39,7 +42,7 @@ if (app.Environment.IsDevelopment())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Tarayiciyi açarken bir hata oluştu: {ex.Message}");
+        Console.WriteLine($"Tarayıcıyı açarken bir hata oluştu: {ex.Message}");
     }
 }
 

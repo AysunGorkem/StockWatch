@@ -7,7 +7,7 @@ namespace StockWatch.Infrastructure
     {
         public StockWatchDbContext(DbContextOptions<StockWatchDbContext> options) : base(options) { }
 
-        // Veritabanındaki tabloları temsil etmek için DbSet kullanılır.
+        // Veritabanındaki tabloları temsil etmek için DbSet
         public DbSet<Product> Products { get; set; }
     }
 }

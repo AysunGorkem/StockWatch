@@ -1,23 +1,40 @@
 using Microsoft.AspNetCore.Mvc;
-using StockWatch.Application.Services;
+using StockWatch.Application.Services; 
+using StockWatch.Core.Models; 
+using System.Threading.Tasks;
 
-namespace StockWatch.API.Controllers{
-    [ApiController]  
-    [Route("api/[controller]")] 
+namespace StockWatch.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
         private readonly ProductService _productService;
-        public ProductController()
+
+        public ProductController(ProductService productService)
         {
-            _productService = new ProductService();
+            _productService = productService;
         }
 
+        // GET api/products
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var products = _productService.GetAllProducts();
-            return Ok(products);  // 200 OK
+            var products = await _productService.GetAllProducts(); 
+            return Ok(products);  // 200 OK ile döndürüyoruz
+        }
+
+        // POST api/products
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] Product product)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); 
+            }
+
+            await _productService.AddProduct(product);  
+            return CreatedAtAction(nameof(GetAll), new { id = product.Id }, product); 
         }
     }
-
 }
