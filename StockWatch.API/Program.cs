@@ -1,41 +1,67 @@
+using Microsoft.EntityFrameworkCore;         
+using StockWatch.Infrastructure;             
+using Microsoft.OpenApi.Models;            
+using System.Diagnostics;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// PostgreSQL bağlantısını ekleme
+builder.Services.AddDbContext<StockWatchDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// OpenAPI ve Swagger yapılandırması ekleme
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "StockWatch API", Version = "v1" });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Geliştirme ortamında Swagger'ı etkinleştir
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "StockWatch API v1");
+    });
+
+    // Swagger UI'yi tarayıcıda otomatik olarak açmak
+    try
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "chrome",
+            Arguments = "https://localhost:5000/swagger",
+            UseShellExecute = true
+        });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Tarayiciyi açarken bir hata oluştu: {ex.Message}");
+    }
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+// API uç noktası: Veritabanındaki tüm ürünleri getirme
+app.MapGet("/products", async (StockWatchDbContext db) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    return await db.Products.ToListAsync();
 })
-.WithName("GetWeatherForecast");
+.WithName("GetAllProducts");
+
+// API uç noktası: Veritabanına yeni ürün ekleme
+app.MapPost("/products", async (StockWatchDbContext db, Product product) =>
+{
+    db.Products.Add(product);
+    await db.SaveChangesAsync();
+    return Results.Created($"/products/{product.Id}", product);
+})
+.WithName("CreateProduct");
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+// Product model sınıfı
+public record Product(int Id, string Name, string Category, int Quantity, decimal Price);

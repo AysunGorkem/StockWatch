@@ -1,4 +1,6 @@
 using StockWatch.Core.Models;
+using System.Collections.Generic;
+
 namespace StockWatch.Application.Services
 {
     public class ProductService
@@ -7,9 +9,10 @@ namespace StockWatch.Application.Services
         {
             return new List<Product>
             {
-                new Product { Id = 1, Name = "Product 1", Category = "Category 1", Quantity = 100, Price = 19.99M },
-                new Product { Id = 2, Name = "Product 2", Category = "Category 2", Quantity = 50, Price = 29.99M }
+                new Product(1, "Product 1", "Category 1", 100, 19.99M),
+                new Product(2, "Product 2", "Category 2", 50, 29.99M)
             };
         }
     }
 }
+
